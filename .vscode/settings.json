@@ -12,5 +12,5 @@
         "editor.defaultFormatter": "ms-python.black-formatter",
         "editor.formatOnSave": true
     },
-    "python.languageServer": "Jedi" //uncomment for imgui autocompletion
+    // "python.languageServer": "Jedi" //uncomment for imgui autocompletion
 }

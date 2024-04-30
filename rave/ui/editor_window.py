@@ -16,14 +16,15 @@ class EditorWindow(Window):
         self,
         audio_drivers: List[str],
         default_driver_index: int,
-        apply_btn_callback: Callable[[str], None],
+        apply_audio_btn_callback: Callable[[str], None],
+        compile_shader_callback: Callable[[str], None],
     ) -> None:
         super().__init__("Editor")
 
         self.editors_tabs = [
-            ScriptingEditorTab(),
+            ScriptingEditorTab(compile_shader_callback),
             LiveControlTab(),
-            AudioConfigTab(audio_drivers, default_driver_index, apply_btn_callback),
+            AudioConfigTab(audio_drivers, default_driver_index, apply_audio_btn_callback),
         ]
 
     def draw(self) -> None:

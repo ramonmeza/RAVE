@@ -1,16 +1,19 @@
+import webbrowser
+
+from typing import Any, Optional
+
 import imgui
 import moderngl
-import webbrowser
 
 from moderngl_window import WindowConfig
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
-from typing import Any, Optional
 
+from rave.audio_source import AudioSource
 from rave.database.database import Database
+from rave.ui.about_window import AboutWindow
 from rave.ui.editor_window import EditorWindow
 from rave.ui.login_window import LoginWindow
-from rave.ui.about_window import AboutWindow
-from rave.audio_source import AudioSource
+from rave.ui.shader_viewer import ShaderViewer
 
 
 class App(WindowConfig):
@@ -21,6 +24,7 @@ class App(WindowConfig):
     _about_window: AboutWindow
     _login_window: LoginWindow
     _editor_window: EditorWindow
+    _shader_viewer: ShaderViewer
     _user: Optional[Any]
     _show_popup: bool
     _popup_message: str
@@ -32,8 +36,8 @@ class App(WindowConfig):
         imgui.create_context()
         self._imgui_renderer = ModernglWindowRenderer(self.wnd)
 
-        # create audio source
         self._audio_source = AudioSource()
+        self._shader_viewer = ShaderViewer()
 
         # connect to database
         self._database = Database()
@@ -48,6 +52,7 @@ class App(WindowConfig):
             self._audio_source.get_available_drivers(),
             self._audio_source.get_default_loopback_driver(),
             self.apply_audio_config_callback,
+            self.compile_shader_callback,
         )
         self._about_window = AboutWindow()
         self._editor_window.open()
@@ -77,12 +82,21 @@ class App(WindowConfig):
     def apply_audio_config_callback(self, audio_device_index: int) -> None:
         self._audio_source.start_stream(input_device_index=audio_device_index)
 
+    def compile_shader_callback(self, fragment_shader_source_code: str) -> None:
+        try:
+            self._shader_viewer.compile(self.ctx, fragment_shader_source_code)
+        except Exception as e:
+            print(f"Shader compilation error: {e}")
+
     # methods
     def popup(self, message: str) -> None:
         self._show_popup = True
         self._popup_message = message
 
     def render(self, time: float, frametime: float) -> None:
+        self._shader_viewer.render(
+            time, frametime, self._audio_source.rms, self._audio_source.fft
+        )
         self.render_ui()
 
     def render_ui(self) -> None:
@@ -142,6 +156,7 @@ class App(WindowConfig):
     def resize(self, width: int, height: int):
         self.aspect_ratio = width / height
         imgui.get_io().display_size = width, height
+        self._shader_viewer.update_resolution(width, height)
         self._imgui_renderer.resize(width, height)
         super().resize(width, height)
 

@@ -1,12 +1,17 @@
 import audioop
+import numpy as np
 import pyaudiowpatch as pyaudio
 
 from typing import Any, List
 
 
+CHUNK_SIZE: int = 1024
+
+
 class AudioSource:
     _src: pyaudio.PyAudio
     _stream: pyaudio.Stream
+    _buffer: List
 
     rms: float
     fft: List[float]
@@ -15,7 +20,8 @@ class AudioSource:
         self._src = pyaudio.PyAudio()
         self._stream = None
         self.rms = 0.0
-        self.fft = []
+        self.fft = np.array([], dtype=np.float32)
+        self._buffer = np.array([], dtype=np.int16)
 
     def start_stream(
         self,
@@ -52,10 +58,16 @@ class AudioSource:
         return self._src.get_default_wasapi_loopback()["index"]
 
     def audio_receieved(self, in_data, frame_count, time_info, status) -> Any:
-        # set rms
-        self.rms = audioop.rms(in_data, 2)
+        self.rms = audioop.rms(in_data, 2) / 32767.0
 
-        # set fft
-        self.fft = []  # @todo
+        # fft
+        self._buffer = np.append(self._buffer, np.frombuffer(in_data, dtype=np.int16))
+        if len(self._buffer) >= CHUNK_SIZE:
+            chunk = self._buffer[:CHUNK_SIZE]
+
+            res = np.abs(np.fft.fft(chunk) / CHUNK_SIZE)
+            self.fft = res[: len(res) // 2]
+
+            self._buffer = self._buffer[CHUNK_SIZE:]
 
         return (in_data, pyaudio.paContinue)

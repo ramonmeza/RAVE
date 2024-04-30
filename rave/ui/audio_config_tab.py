@@ -5,7 +5,7 @@ from rave.ui.editor_tab import EditorTab
 from typing import Callable, List, Optional
 
 
-STREAM_ON_STARTUP: bool = False
+STREAM_ON_STARTUP: bool = True
 
 
 class AudioConfigTab(EditorTab):
