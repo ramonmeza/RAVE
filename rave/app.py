@@ -1,5 +1,6 @@
 import imgui
 import moderngl
+import webbrowser
 
 from moderngl_window import WindowConfig
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
@@ -8,6 +9,7 @@ from typing import Any, Optional
 from rave.database.database import Database
 from rave.ui.editor_window import EditorWindow
 from rave.ui.login_window import LoginWindow
+from rave.ui.about_window import AboutWindow
 from rave.audio_source import AudioSource
 
 
@@ -16,6 +18,7 @@ class App(WindowConfig):
 
     _audio_source: AudioSource
     _database: Database
+    _about_window: AboutWindow
     _login_window: LoginWindow
     _editor_window: EditorWindow
     _user: Optional[Any]
@@ -46,6 +49,7 @@ class App(WindowConfig):
             self._audio_source.get_default_loopback_driver(),
             self.apply_audio_config_callback,
         )
+        self._about_window = AboutWindow()
         self._editor_window.open()
 
         self._show_popup = False
@@ -91,7 +95,9 @@ class App(WindowConfig):
 
             with imgui.begin_menu("Window") as window_menu:
                 if window_menu.opened:
-                    imgui.menu_item("Toggle Fullscreen", "F11")
+                    clicked, _ = imgui.menu_item("Toggle Fullscreen", "F11")
+                    if clicked:
+                        self.wnd.fullscreen = not self.wnd.fullscreen
 
             with imgui.begin_menu("User") as user_menu:
                 if user_menu.opened:
@@ -107,11 +113,17 @@ class App(WindowConfig):
 
             with imgui.begin_menu("Help") as help_menu:
                 if help_menu.opened:
-                    imgui.menu_item("Documentation")
-                    imgui.menu_item("About RAVE")
+                    clicked, _ = imgui.menu_item("Documentation")
+                    if clicked:
+                        webbrowser.open("https://github.com/ramonmeza/RAVE")
+
+                    clicked, _ = imgui.menu_item("About RAVE")
+                    if clicked:
+                        self._about_window.open()
 
         self._editor_window.render()
         self._login_window.render()
+        self._about_window.render()
 
         # popup
         if self._show_popup:

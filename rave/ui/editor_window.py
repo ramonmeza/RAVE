@@ -4,6 +4,7 @@ from typing import Callable, List, Optional
 
 from rave.ui.editor_tab import EditorTab
 from rave.ui.audio_config_tab import AudioConfigTab
+from rave.ui.live_control_tab import LiveControlTab
 from rave.ui.scripting_editor_tab import ScriptingEditorTab
 from rave.ui.window import Window
 
@@ -21,6 +22,7 @@ class EditorWindow(Window):
 
         self.editors_tabs = [
             ScriptingEditorTab(),
+            LiveControlTab(),
             AudioConfigTab(audio_drivers, default_driver_index, apply_btn_callback),
         ]
 

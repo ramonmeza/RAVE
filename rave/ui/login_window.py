@@ -55,7 +55,7 @@ class LoginWindow(Window):
 
             btn_clicked = imgui.button("Login")
 
-            if btn_clicked and disabled and self._submit_callback is not None:
+            if btn_clicked and not disabled and self._submit_callback is not None:
                 self._submit_callback(self.email_value, self.password_value)
 
             if disabled:
