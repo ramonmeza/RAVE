@@ -17,6 +17,9 @@ from rave.ui.shader_viewer import ShaderViewer
 
 
 class App(WindowConfig):
+    title = "RAVE: Real-time Visualization Editor"
+    window_size = (1280, 720)
+
     _imgui_renderer: ModernglWindowRenderer
 
     _audio_source: AudioSource
@@ -37,7 +40,6 @@ class App(WindowConfig):
         self._imgui_renderer = ModernglWindowRenderer(self.wnd)
 
         self._audio_source = AudioSource()
-        self._shader_viewer = ShaderViewer()
 
         # connect to database
         self._database = Database()
@@ -55,10 +57,13 @@ class App(WindowConfig):
             self.compile_shader_callback,
         )
         self._about_window = AboutWindow()
+        self._shader_viewer = ShaderViewer()
         self._editor_window.open()
 
         self._show_popup = False
         self._popup_message = ""
+
+        self.compile_shader_callback(self._editor_window.get_fragment_source_code())
 
     # callbacks
     def login_submit_callback(self, email: str, password: str) -> None:
@@ -85,6 +90,7 @@ class App(WindowConfig):
     def compile_shader_callback(self, fragment_shader_source_code: str) -> None:
         try:
             self._shader_viewer.compile(self.ctx, fragment_shader_source_code)
+            self._editor_window.update_live_controls(self._shader_viewer.program)
         except Exception as e:
             print(f"Shader compilation error: {e}")
 

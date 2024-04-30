@@ -5,7 +5,6 @@ from typing import Callable, Optional
 
 
 BUFFER_SIZE: int = 1024
-COMPILE_ON_STARTUP: bool = True
 
 
 class ScriptingEditorTab(EditorTab):
@@ -29,16 +28,15 @@ uniform float u_audio_rms;
             + f"""uniform float u_audio_fft[{int(BUFFER_SIZE / 2)}];"""
             + """
 
+uniform float volScale;
+
 out vec4 fragColor;
 
 void main()
 {
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
+    fragColor = vec4(mod(u_audio_rms * volScale, 1.0), 0.0, 0.0, 1.0);
 }"""
         )
-
-        if COMPILE_ON_STARTUP and self._compile_callback is not None:
-            self._compile_callback(self._fragment_shader_source_code)
 
     def draw(self) -> None:
         with imgui.begin_group():

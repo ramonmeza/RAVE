@@ -28,13 +28,10 @@ class ShaderViewer:
     audio_rms: float
     audio_fft: List[float]
 
-    uniform_history: Dict
-
     def __init__(self) -> None:
         self.program = None
         self.VAO = None
         self.VBO = None
-        self.uniform_history = {}
 
     def compile(
         self, context: moderngl.Context, fragment_shader_source_code: str
@@ -45,10 +42,7 @@ class ShaderViewer:
         )
 
         self.VAO = quad_fs()
-
-        for key, value in self.uniform_history:
-            if key in self.program:
-                self.program[key].write(value)
+        self.update_uniforms()
 
     def update_resolution(self, width: float, height: float) -> None:
         if self.program is not None:
