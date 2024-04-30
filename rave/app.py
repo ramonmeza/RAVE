@@ -8,11 +8,13 @@ from typing import Any, Optional
 from rave.database.database import Database
 from rave.ui.editor_window import EditorWindow
 from rave.ui.login_window import LoginWindow
+from rave.audio_source import AudioSource
 
 
 class App(WindowConfig):
     _imgui_renderer: ModernglWindowRenderer
 
+    _audio_source: AudioSource
     _database: Database
     _login_window: LoginWindow
     _editor_window: EditorWindow
@@ -27,6 +29,9 @@ class App(WindowConfig):
         imgui.create_context()
         self._imgui_renderer = ModernglWindowRenderer(self.wnd)
 
+        # create audio source
+        self._audio_source = AudioSource()
+
         # connect to database
         self._database = Database()
         self._database.open("rave.db")
@@ -36,7 +41,11 @@ class App(WindowConfig):
         self._login_window = LoginWindow(
             self.login_submit_callback, self.login_register_callback
         )
-        self._editor_window = EditorWindow()
+        self._editor_window = EditorWindow(
+            self._audio_source.get_available_drivers(),
+            self._audio_source.get_default_loopback_driver(),
+            self.apply_audio_config_callback,
+        )
         self._editor_window.open()
 
         self._show_popup = False
@@ -60,6 +69,9 @@ class App(WindowConfig):
 
     def logout(self) -> None:
         self._user = None
+
+    def apply_audio_config_callback(self, audio_device_index: int) -> None:
+        self._audio_source.start_stream(input_device_index=audio_device_index)
 
     # methods
     def popup(self, message: str) -> None:
@@ -150,5 +162,6 @@ class App(WindowConfig):
         super().unicode_char_entered(char)
 
     def close(self) -> None:
+        self._audio_source.close()
         self._database.close()
         super().close()

@@ -524,6 +524,30 @@ test = ["appdirs (==1.4.4)", "covdefaults (>=2.3)", "pytest (>=7.4.3)", "pytest-
 type = ["mypy (>=1.8)"]
 
 [[package]]
+name = "pyaudiowpatch"
+version = "0.2.12.6"
+description = "PortAudio fork with WASAPI loopback support"
+optional = false
+python-versions = "*"
+files = [
+    {file = "PyAudioWPatch-0.2.12.6-cp310-cp310-win32.whl", hash = "sha256:3eac00d775820ee9f2f07f91965c93eb6b06864356ae197489be632add13d5e8"},
+    {file = "PyAudioWPatch-0.2.12.6-cp310-cp310-win_amd64.whl", hash = "sha256:962fe6f210aa1e1d62d8ac5f433ee7095603989f614754c819995f2328150b51"},
+    {file = "PyAudioWPatch-0.2.12.6-cp311-cp311-win32.whl", hash = "sha256:5ae26f1f7d6b76f9a6d124daef4922b12572b4f393fbe99637ea89cb03e390d8"},
+    {file = "PyAudioWPatch-0.2.12.6-cp311-cp311-win_amd64.whl", hash = "sha256:ff9642f32d6cc9fb183c88f36a9a34d8a7f0434dd96022ec7d235732c07c2188"},
+    {file = "PyAudioWPatch-0.2.12.6-cp312-cp312-win32.whl", hash = "sha256:6121c247f2c4417cbbcbe9cbb419b8883370d2b9951f798cf1031a55495b97a0"},
+    {file = "PyAudioWPatch-0.2.12.6-cp312-cp312-win_amd64.whl", hash = "sha256:b5d3395aa9ab6ce59be7e18df84be9b749725b606317cd9290496082fac8256d"},
+    {file = "PyAudioWPatch-0.2.12.6-cp37-cp37m-win32.whl", hash = "sha256:42bd9bb177575d2c4cf039513be48254694d670841029e0a7c70d8949025e802"},
+    {file = "PyAudioWPatch-0.2.12.6-cp37-cp37m-win_amd64.whl", hash = "sha256:e3014ff6c35e844b4977b0c201b74f69ad7319cdf2fc17b7658c8017bca0414e"},
+    {file = "PyAudioWPatch-0.2.12.6-cp38-cp38-win32.whl", hash = "sha256:3142092a8be291879d8fb3f99871bbe19225f30894b27721c804eec401e3dbfa"},
+    {file = "PyAudioWPatch-0.2.12.6-cp38-cp38-win_amd64.whl", hash = "sha256:bfcd7708c84fc7d0bbb29f27235369d3f547459f124b088a5f7281e72cd2daeb"},
+    {file = "PyAudioWPatch-0.2.12.6-cp39-cp39-win32.whl", hash = "sha256:d80712f502e0709fee3c93b568ed69343b6a2ba5b0e2e9c72d7ca19a91c1c87a"},
+    {file = "PyAudioWPatch-0.2.12.6-cp39-cp39-win_amd64.whl", hash = "sha256:c8d803a08ddab5e97b25df4e506b955d97a067bbccdff13f5b70115ddeeb0e5d"},
+]
+
+[package.extras]
+test = ["numpy"]
+
+[[package]]
 name = "pyglet"
 version = "2.0.15"
 description = "pyglet is a cross-platform games and multimedia package."
@@ -563,4 +587,4 @@ numpy = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "011f9fcdf0fb2b0136b239d267c3d700a7ce0f3f497737c5addb51079abc278d"
+content-hash = "125c30e06fa8e7feba8b910a0fdf5c124681e5241c463204f9dbab2c00e81d63"
