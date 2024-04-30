@@ -110,7 +110,7 @@ class Database:
         user = self._select_where(["id"], "users", ["email"], [email])
         return user
 
-    def register_user(self, email: str, password: str) -> bool:
+    def register_user(self, email: str, password: str) -> Any:
         try:
             if self.is_user_registered(email):
                 print("user already registered")
@@ -126,7 +126,7 @@ class Database:
             self._insert(
                 "users", ["email", "password", "salt"], (email, hashed_password, salt)
             )
-            return True
+            return self.login(email, password)
         except:
             return False
 
@@ -162,12 +162,24 @@ class Database:
             "purchases", ["user_id", "product_id"], [user_id, product_id]
         )
 
-    def login(self, email: str, password: str) -> Any:
+    def login(self, email: str, password: str) -> Optional[Any]:
         try:
-            result = self._select_where(['*'], 'users', ['email', 'password'], [email, password])
-            return result
+            result = self._select_where(["*"], "users", ["email"], [email])
+
+            if result is not None:
+                # compare password
+                user_id, _, stored_password, salt = result
+                hashed_password = hashlib.pbkdf2_hmac(
+                    "sha256", password.encode("utf-8"), salt, 100000
+                )
+
+                if hashed_password == stored_password:
+                    return result[0], result[1]  # dont send back salt
+
+            return None
+
         except:
-            return False
+            return None
 
 
 if __name__ == "__main__":

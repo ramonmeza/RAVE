@@ -3,6 +3,7 @@ import moderngl
 
 from moderngl_window import WindowConfig
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
+from typing import Any, Optional
 
 from rave.database.database import Database
 from rave.ui.editor_window import EditorWindow
@@ -15,7 +16,9 @@ class App(WindowConfig):
     _database: Database
     _login_window: LoginWindow
     _editor_window: EditorWindow
-    _user_id: int
+    _user: Optional[Any]
+    _show_popup: bool
+    _popup_message: str
 
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
@@ -27,7 +30,7 @@ class App(WindowConfig):
         # connect to database
         self._database = Database()
         self._database.open("rave.db")
-        self._user_id = -1
+        self._user = None
 
         # window inits
         self._login_window = LoginWindow(
@@ -36,22 +39,76 @@ class App(WindowConfig):
         self._editor_window = EditorWindow()
         self._editor_window.open()
 
+        self._show_popup = False
+        self._popup_message = ""
+
     # callbacks
     def login_submit_callback(self, email: str, password: str) -> None:
         self._user = self._database.login(email, password)
+        if self._user is None:
+            self.popup("Failed to login")
+        else:
+            self._login_window.close()
 
     def login_register_callback(self, email: str, password: str) -> None:
-        pass
+        self._user = self._database.register_user(email, password)
+
+        if self._user is None:
+            self.popup("Failed to register")
+        else:
+            self._login_window.close()
+
+    def logout(self) -> None:
+        self._user = None
 
     # methods
+    def popup(self, message: str) -> None:
+        self._show_popup = True
+        self._popup_message = message
+
     def render(self, time: float, frametime: float) -> None:
         self.render_ui()
 
     def render_ui(self) -> None:
         imgui.new_frame()
 
+        with imgui.begin_main_menu_bar() as menu_bar:
+            with imgui.begin_menu("File") as file_menu:
+                if file_menu.opened:
+                    imgui.menu_item("Exit", "Alt+F4")
+
+            with imgui.begin_menu("Window") as window_menu:
+                if window_menu.opened:
+                    imgui.menu_item("Toggle Fullscreen", "F11")
+
+            with imgui.begin_menu("User") as user_menu:
+                if user_menu.opened:
+                    if self._user is None:
+                        clicked, _ = imgui.menu_item("Login")
+                        if clicked:
+                            self._login_window.open()
+                    else:
+                        imgui.menu_item(self._user[1], enabled=False)
+                        clicked, _ = imgui.menu_item("Log Out")
+                        if clicked:
+                            self.logout()
+
+            with imgui.begin_menu("Help") as help_menu:
+                if help_menu.opened:
+                    imgui.menu_item("Documentation")
+                    imgui.menu_item("About RAVE")
+
         self._editor_window.render()
         self._login_window.render()
+
+        # popup
+        if self._show_popup:
+            imgui.open_popup("popup")
+            self._show_popup = False
+
+        with imgui.begin_popup("popup") as popup:
+            if popup.opened:
+                imgui.text_colored(self._popup_message, 1.0, 0.0, 0.0)
 
         imgui.render()
         self._imgui_renderer.render(imgui.get_draw_data())

@@ -21,6 +21,9 @@ class Window(abc.ABC):
     def open(self) -> None:
         self.opened = True
 
+    def close(self) -> None:
+        self.opened = False
+
     @abc.abstractmethod
     def draw(self) -> None:
         raise NotImplementedError
