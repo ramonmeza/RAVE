@@ -162,6 +162,13 @@ class Database:
             "purchases", ["user_id", "product_id"], [user_id, product_id]
         )
 
+    def login(self, email: str, password: str) -> Any:
+        try:
+            result = self._select_where(['*'], 'users', ['email', 'password'], [email, password])
+            return result
+        except:
+            return False
+
 
 if __name__ == "__main__":
     email = "ramon_meza@live.com"
@@ -183,6 +190,6 @@ if __name__ == "__main__":
     product_id = db.get_products()[0][0]
 
     if db.purchase_product(user_id, product_id):
-        print('user purchased product')
-    
+        print("user purchased product")
+
     db.close()
