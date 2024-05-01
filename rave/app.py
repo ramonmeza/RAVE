@@ -15,6 +15,8 @@ from rave.ui.editor_window import EditorWindow
 from rave.ui.login_window import LoginWindow
 from rave.ui.shader_viewer import ShaderViewer
 
+from rave.utils import open_filedialog, save_filedialog
+
 
 class App(WindowConfig):
     title = "RAVE: Real-time Visualization Editor"
@@ -95,6 +97,28 @@ class App(WindowConfig):
             print(f"Shader compilation error: {e}")
 
     # methods
+    def save(self) -> None:
+        # get path to save to
+        path = save_filedialog(
+            defaultextension=".glsl",
+            filetypes=[
+                GLSL_FILES_FILTER,
+                ALL_FILES_FILTER,
+            ],
+        )
+        if path is None:
+            return
+
+        # get all uniform values
+        uniform_values = self._editor_window.get_
+        # get shader code
+
+        # write data to file
+        with open(path, "w") as fp:
+            fp.write(self._vertex_shader_source_code)
+
+        save_filedialog()
+
     def popup(self, message: str) -> None:
         self._show_popup = True
         self._popup_message = message
@@ -111,7 +135,13 @@ class App(WindowConfig):
         with imgui.begin_main_menu_bar() as menu_bar:
             with imgui.begin_menu("File") as file_menu:
                 if file_menu.opened:
-                    imgui.menu_item("Exit", "Alt+F4")
+                    clicked, _ = imgui.menu_item("Save", "Ctrl+S")
+                    if clicked:
+                        self.save()
+
+                    clicked, _ = imgui.menu_item("Exit", "Alt+F4")
+                    if clicked:
+                        self.wnd.close()
 
             with imgui.begin_menu("Window") as window_menu:
                 if window_menu.opened:
