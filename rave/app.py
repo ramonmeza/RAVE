@@ -1,3 +1,4 @@
+import audioop
 import enum
 import imgui
 import tkinter as tk
@@ -10,6 +11,8 @@ from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from typing import List, Optional, Tuple
 
+from rave.audio_device import AudioDevice
+from rave.audio_config_window import AudioConfigWindow
 from rave.live_control_window import LiveControlWindow
 from rave.project import Project, UniformField, load_project, save_project
 from rave.project_overview_window import ProjectOverviewWindow
@@ -23,7 +26,7 @@ FileTypeSpecifier = List[Tuple[str, ...]]
 
 
 # constants
-EXPOSED_UNIFORMS: List[str] = ["rTime"]
+EXPOSED_UNIFORMS: List[str] = ["rTime", "rFrameTime", "rAudioRMS", "rAudioFFT"]
 
 
 # enums
@@ -31,6 +34,7 @@ class WindowType(enum.IntEnum):
     PROJECT_OVERVIEW = 0
     SCRIPTING = 1
     LIVE_CONTROL = 2
+    AUDIO_CONFIG = 3
 
 
 # classes
@@ -45,14 +49,22 @@ class App(WindowConfig):
         super().__init__(**kwargs)
 
         self.project = Project()
+        self.audio_device = AudioDevice()
+
         self.windows = [
             ProjectOverviewWindow(),
             ScriptingWindow(script_changed_callback=self.script_changed_callback),
             LiveControlWindow(),
+            AudioConfigWindow(
+                default_device_index=self.audio_device.get_default_loopback_device_index(),
+                apply_audio_config_callback=self.apply_audio_config_callback,
+            ),
         ]
         self.shader_viewer = ShaderViewer(
             update_uniforms_callback=self.update_uniforms_callback
         )
+
+        self.audio_config_window.set_all_devices(self.audio_device.get_all_devices())
 
         imgui.create_context()
         self._imgui_renderer = ModernglWindowRenderer(self.wnd)
@@ -67,6 +79,14 @@ class App(WindowConfig):
     @property
     def scripting_window(self) -> ScriptingWindow:
         return self.windows[WindowType.SCRIPTING]
+
+    @property
+    def live_control_window(self) -> LiveControlWindow:
+        return self.windows[WindowType.LIVE_CONTROL]
+
+    @property
+    def audio_config_window(self) -> AudioConfigWindow:
+        return self.windows[WindowType.AUDIO_CONFIG]
 
     # methods
     def open_filedialog(
@@ -109,6 +129,8 @@ class App(WindowConfig):
         windows = {
             WindowType.PROJECT_OVERVIEW: self.project_overview_window,
             WindowType.SCRIPTING: self.scripting_window,
+            WindowType.LIVE_CONTROL: self.live_control_window,
+            WindowType.AUDIO_CONFIG: self.audio_config_window,
         }
 
         window = windows[window_type]
@@ -151,14 +173,22 @@ class App(WindowConfig):
         self.project.uniform_fields = fields
 
     def update_uniforms_callback(
-        self, program: moderngl.Program, time: float, timeframe: float
+        self, program: moderngl.Program, time: float, frametime: float
     ) -> None:
-        #
-        if "rTime" in program:
-            program["rTime"] = time
+        # rave exposed uniforms
+        rave_uniforms = {
+            "rTime": time,
+            "rFrameTime": frametime,
+            "rAudioRMS": self.audio_device.get_rms(),
+            "rAudioFFT": self.audio_device.get_fft(),
+        }
 
-        if "rFrameTime" in program:
-            program["rFrameTime"] = frametime
+        for key, value in rave_uniforms.items():
+            if key in program:
+                if isinstance(value, bytes):
+                    program[key].write(value)
+                else:
+                    program[key] = value
 
         # ui exposed uniforms
         for u in self.project.uniform_fields:
@@ -167,6 +197,20 @@ class App(WindowConfig):
                     program[u.name].write(u.value)
                 else:
                     program[u.name] = u.value
+
+    def apply_audio_config_callback(
+        self,
+        input_device_index: int,
+        sample_rate: int,
+        channels: int,
+        frames_per_buffer: int,
+    ) -> None:
+        self.audio_device.start(
+            input_device_index=input_device_index,
+            sample_rate=sample_rate,
+            channels=channels,
+            frames_per_buffer=frames_per_buffer,
+        )
 
     # rendering methods
     def draw_main_menu_bar(self) -> None:
@@ -207,6 +251,10 @@ class App(WindowConfig):
                     if clicked:
                         self.open_window_callback(WindowType.LIVE_CONTROL)
 
+                    clicked, _ = imgui.menu_item("Audio Config", "F4")
+                    if clicked:
+                        self.open_window_callback(WindowType.AUDIO_CONFIG)
+
     def draw_windows(self, time: float, frametime: float) -> None:
         for window in self.windows:
             window.render(time=time, frametime=frametime, project=self.project)
@@ -240,10 +288,12 @@ class App(WindowConfig):
                 # no modifiers applied
                 if key == self.wnd.keys.F1:
                     self.open_window_callback(WindowType.PROJECT_OVERVIEW)
-                if key == self.wnd.keys.F2:
+                elif key == self.wnd.keys.F2:
                     self.open_window_callback(WindowType.SCRIPTING)
-                if key == self.wnd.keys.F3:
+                elif key == self.wnd.keys.F3:
                     self.open_window_callback(WindowType.LIVE_CONTROL)
+                elif key == self.wnd.keys.F4:
+                    self.open_window_callback(WindowType.AUDIO_CONFIG)
 
             elif not modifiers.shift and modifiers.ctrl and not modifiers.alt:
                 # only CTRL
@@ -279,4 +329,5 @@ class App(WindowConfig):
         super().unicode_char_entered(char)
 
     def close(self) -> None:
+        self.audio_device.close()
         super().close()
