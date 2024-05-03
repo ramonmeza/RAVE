@@ -1,7 +1,7 @@
 import moderngl
 
 from moderngl_window.geometry import quad_fs
-from typing import List, Optional
+from typing import Callable, List, Optional
 
 from rave.project import Project
 
@@ -9,10 +9,14 @@ from rave.project import Project
 class ShaderViewer:
     program: Optional[moderngl.Program]
     VAO: Optional[moderngl.VertexArray]
+    update_uniforms_callback: Callable[[float, float], None]
 
-    def __init__(self) -> None:
+    def __init__(
+        self, update_uniforms_callback: Callable[[float, float], None]
+    ) -> None:
         self.program = None
         self.VAO = quad_fs()
+        self.update_uniforms_callback = update_uniforms_callback
 
     def compile(
         self, context: moderngl.Context, project: Project
@@ -44,4 +48,6 @@ class ShaderViewer:
 
     def render(self, time: float, frametime: float) -> None:
         if self.program is not None:
+            if self.update_uniforms_callback is not None:
+                self.update_uniforms_callback(self.program, time, frametime)
             self.VAO.render(self.program)

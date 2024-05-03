@@ -2,6 +2,7 @@ import enum
 import imgui
 import tkinter as tk
 
+import moderngl
 import moderngl_window
 from moderngl_window import WindowConfig
 from moderngl_window.context.base.keys import KeyModifiers
@@ -49,7 +50,9 @@ class App(WindowConfig):
             ScriptingWindow(script_changed_callback=self.script_changed_callback),
             LiveControlWindow(),
         ]
-        self.shader_viewer = ShaderViewer()
+        self.shader_viewer = ShaderViewer(
+            update_uniforms_callback=self.update_uniforms_callback
+        )
 
         imgui.create_context()
         self._imgui_renderer = ModernglWindowRenderer(self.wnd)
@@ -146,6 +149,24 @@ class App(WindowConfig):
                 fields.append(UniformField(u.name, u.fmt, u.value, 0.0, 1.0))
 
         self.project.uniform_fields = fields
+
+    def update_uniforms_callback(
+        self, program: moderngl.Program, time: float, timeframe: float
+    ) -> None:
+        #
+        if "rTime" in program:
+            program["rTime"] = time
+
+        if "rFrameTime" in program:
+            program["rFrameTime"] = frametime
+
+        # ui exposed uniforms
+        for u in self.project.uniform_fields:
+            if u.name in program:
+                if isinstance(u.value, bytes):
+                    program[u.name].write(u.value)
+                else:
+                    program[u.name] = u.value
 
     # rendering methods
     def draw_main_menu_bar(self) -> None:
