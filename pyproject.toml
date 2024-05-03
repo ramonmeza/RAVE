@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "rave"
+name = "RAVE: Real-time Audio Visualization Editor"
 version = "0.1.0"
-description = ""
+description = "A simple-to-use, real-time audio visualization editor, with GLSL scripting support, automatic visual parameter binding, and loopback driver support."
 authors = ["Ramon Meza <ramon_meza@live.com>"]
 readme = "README.md"
 
