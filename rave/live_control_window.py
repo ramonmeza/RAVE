@@ -5,7 +5,7 @@ from rave.tool_window import ToolWindow
 
 
 class LiveControlWindow(ToolWindow):
-    def __init__(self, opened: bool = True) -> None:
+    def __init__(self, opened: bool = False) -> None:
         super().__init__("Live Control", opened)
 
     def draw(self, project: Project, **kwargs) -> None:

@@ -1,10 +1,11 @@
 import audioop
 import enum
 import imgui
-import tkinter as tk
-
+import numpy as np
 import moderngl
 import moderngl_window
+import tkinter as tk
+
 from moderngl_window import WindowConfig
 from moderngl_window.context.base.keys import KeyModifiers
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
@@ -98,11 +99,15 @@ class App(WindowConfig):
         return path if path else None
 
     def save_filedialog(
-        self, defaultextension: str, filetypes: FileTypeSpecifier = [("All Files", "*")]
+        self,
+        initialfile: str,
+        defaultextension: str,
+        filetypes: FileTypeSpecifier = [("All Files", "*")],
     ) -> bool:
         root = tk.Tk()
         root.withdraw()
         path = asksaveasfilename(
+            initialfile=initialfile,
             confirmoverwrite=True,
             defaultextension=defaultextension,
             filetypes=filetypes,
@@ -119,7 +124,10 @@ class App(WindowConfig):
                 self.project = Project()
 
     def save_project_callback(self) -> None:
-        path = self.save_filedialog(".raveproj", [("RAVE Project", "*.raveproj")])
+        default_file_name = f"{self.project.name} by {self.project.author}"
+        path = self.save_filedialog(
+            default_file_name, ".raveproj", [("RAVE Project", "*.raveproj")]
+        )
         if path is not None:
             result = save_project(path, self.project)
             if not result:
@@ -185,8 +193,8 @@ class App(WindowConfig):
 
         for key, value in rave_uniforms.items():
             if key in program:
-                if isinstance(value, bytes):
-                    program[key].write(value)
+                if isinstance(value, np.ndarray):
+                    program[key].write(value.tobytes())
                 else:
                     program[key] = value
 

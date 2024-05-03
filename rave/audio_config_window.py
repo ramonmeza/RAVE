@@ -26,7 +26,7 @@ class AudioConfigWindow(ToolWindow):
         self,
         default_device_index: int = 0,
         apply_audio_config_callback: ApplyAudioConfigCallback = None,
-        opened: bool = True,
+        opened: bool = False,
     ) -> None:
         super().__init__("Audio Config", opened)
         self.all_devices = []

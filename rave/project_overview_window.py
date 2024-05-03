@@ -9,6 +9,10 @@ class ProjectOverviewWindow(ToolWindow):
         super().__init__("Project Overview", opened)
 
     def draw(self, project: Project, **kwargs) -> None:
+        _, project.name = imgui.input_text("Name", project.name)
+        _, project.author = imgui.input_text("Author", project.author)
+        _, project.description = imgui.input_text("Description", project.description)
+
         expanded, _ = imgui.collapsing_header("Uniforms")
         if expanded:
             for u in project.uniform_fields:
@@ -25,18 +29,20 @@ class ProjectOverviewWindow(ToolWindow):
                         flags=imgui.INPUT_TEXT_READ_ONLY,
                     )
 
-        expanded, _ = imgui.collapsing_header("Vertex Shader Source Code")
+        expanded, _ = imgui.collapsing_header("Shader Source Code")
         if expanded:
-            imgui.input_text_multiline(
-                "GLSL Source Code",
-                project.vertex_shader_source_code,
-                flags=imgui.INPUT_TEXT_READ_ONLY,
-            )
+            expanded, _ = imgui.collapsing_header("Vertex Shader Source Code")
+            if expanded:
+                imgui.input_text_multiline(
+                    "GLSL Source Code",
+                    project.vertex_shader_source_code,
+                    flags=imgui.INPUT_TEXT_READ_ONLY,
+                )
 
-        expanded, _ = imgui.collapsing_header("Fragment Shader Source Code")
-        if expanded:
-            imgui.input_text_multiline(
-                "GLSL Source Code",
-                project.fragment_shader_source_code,
-                flags=imgui.INPUT_TEXT_READ_ONLY,
-            )
+            expanded, _ = imgui.collapsing_header("Fragment Shader Source Code")
+            if expanded:
+                imgui.input_text_multiline(
+                    "GLSL Source Code",
+                    project.fragment_shader_source_code,
+                    flags=imgui.INPUT_TEXT_READ_ONLY,
+                )

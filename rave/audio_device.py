@@ -8,18 +8,18 @@ from typing import List
 class AudioDevice:
     source: pyaudio.PyAudio
     stream: pyaudio.Stream
-    audio_buffer: List
+    audio_buffer: np.ndarray
 
     rms: float
-    fft: List[float]
+    fft: np.ndarray
 
-    def __init__(self) -> None:
+    def __init__(self, default_frames_pef_buffer: int = 1024) -> None:
         self.source = pyaudio.PyAudio()
         self.stream = None
-        self.audio_buffer = []
+        self.audio_buffer = np.asanyarray([], dtype="f4")
 
         self.rms = 0.0
-        self.fft = []
+        self.fft = np.asanyarray([0] * int(default_frames_pef_buffer / 2), dtype="f4")
 
     def start(
         self,
@@ -30,6 +30,9 @@ class AudioDevice:
     ) -> None:
         if self.stream is not None:
             self.stream.close()
+
+        self.audio_buffer = np.asanyarray([])
+        self.fft = np.asanyarray([0.0] * int(frames_per_buffer / 2), dtype="f4")
 
         self.stream = self.source.open(
             input_device_index=input_device_index,
@@ -57,7 +60,7 @@ class AudioDevice:
         # rms
         self.rms = audioop.rms(in_data, 2) / 32767.0
 
-        chunk_size = self.stream._frames_per_buffer
+        chunk_size = int(self.stream._frames_per_buffer / 2)
 
         # fft
         self.audio_buffer = np.append(

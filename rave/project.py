@@ -26,13 +26,15 @@ uniform float rTime;
 
 // user specified uniforms
 uniform float uTimeScale;
+uniform float rAudioRMS;
+uniform float rAudioFFT[512];
 
 // output
 out vec4 fragColor;
 
 void main()
 {
-    fragColor = vec4(mod(rTime * uTimeScale, 1.0), 0.0, 0.0, 1.0);
+    fragColor = vec4(mod(rTime * uTimeScale, 1.0), mod(rAudioRMS, 1.0), mod(rAudioFFT[0], 1.0), 1.0);
 }
 """
 
@@ -60,6 +62,15 @@ class UniformField:
 @dataclass
 class Project:
     """Represents a RAVE project, including all uniform values and shader source code."""
+
+    name: str = "My RAVE Project"
+    """Name of the project."""
+
+    author: str = "RAVER"
+    """The person or group of people who worked on this project."""
+
+    description: str = "A cool, real-time visualizer!"
+    """Description of the project."""
 
     uniform_fields: List[UniformField] = field(default_factory=lambda: {})
     """A list of all uniforms and their values."""
