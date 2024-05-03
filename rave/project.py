@@ -82,6 +82,10 @@ class Project:
     """Vertex shader source code for the project."""
 
 
+def new_project() -> Project:
+    return Project()
+
+
 def load_project(path: str) -> Project:
     """Load a Project object from a file, using specified path.
 

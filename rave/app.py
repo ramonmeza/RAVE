@@ -10,12 +10,12 @@ from moderngl_window import WindowConfig
 from moderngl_window.context.base.keys import KeyModifiers
 from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from tkinter.filedialog import askopenfilename, asksaveasfilename
-from typing import List, Optional, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from rave.audio_device import AudioDevice
 from rave.audio_config_window import AudioConfigWindow
 from rave.live_control_window import LiveControlWindow
-from rave.project import Project, UniformField, load_project, save_project
+from rave.project import Project, UniformField, new_project, load_project, save_project
 from rave.project_overview_window import ProjectOverviewWindow
 from rave.scripting_window import ScriptingWindow
 from rave.shader_viewer import ShaderViewer
@@ -28,6 +28,7 @@ FileTypeSpecifier = List[Tuple[str, ...]]
 
 # constants
 EXPOSED_UNIFORMS: List[str] = ["rTime", "rFrameTime", "rAudioRMS", "rAudioFFT"]
+CONFIRM_POPUP_ID: str = "confirm-popup"
 
 
 # enums
@@ -46,8 +47,18 @@ class App(WindowConfig):
     windows: List[ToolWindow]
     shader_viewer: ShaderViewer
 
+    popup_message: Optional[str]
+    popup_cancel_callback: Optional[Callable[[None], None]]
+    popup_confirm_callback: Optional[Callable[[None], None]]
+    popup_active: bool
+
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
+
+        self.popup_message = None
+        self.popup_cancel_callback = None
+        self.popup_confirm_callback = None
+        self.popup_active = False
 
         self.project = Project()
         self.audio_device = AudioDevice()
@@ -90,6 +101,11 @@ class App(WindowConfig):
         return self.windows[WindowType.AUDIO_CONFIG]
 
     # methods
+    def create_new_project(self) -> None:
+        self.project = new_project()
+        self.script_changed_callback()
+        self.update_uniforms_callback(self.shader_viewer.program, 0.0, 0.0)
+
     def open_filedialog(
         self, filetypes: FileTypeSpecifier = [("All Files", "*")]
     ) -> Optional[str]:
@@ -115,6 +131,12 @@ class App(WindowConfig):
         return path if path else None
 
     # callbacks
+    def new_project_callback(self) -> None:
+        self.popup_message = "Are you sure you want to close the current project?"
+        self.popup_confirm_callback = self.create_new_project
+        self.popup_cancel_callback = None
+        self.popup_active = True
+
     def load_project_callback(self) -> None:
         path = self.open_filedialog([("RAVE Project", "*.raveproj")])
         if path is not None:
@@ -225,6 +247,10 @@ class App(WindowConfig):
         with imgui.begin_main_menu_bar() as menu_bar:
             with imgui.begin_menu("File") as file_menu:
                 if file_menu.opened:
+                    clicked, _ = imgui.menu_item("New Project", "Ctrl+N")
+                    if clicked:
+                        self.new_project_callback()
+
                     clicked, _ = imgui.menu_item("Open Project", "Ctrl+O")
                     if clicked:
                         self.load_project_callback()
@@ -267,6 +293,29 @@ class App(WindowConfig):
         for window in self.windows:
             window.render(time=time, frametime=frametime, project=self.project)
 
+    def draw_popups(self) -> None:
+        if self.popup_active:
+            imgui.open_popup(CONFIRM_POPUP_ID)
+
+        with imgui.begin_popup_modal(CONFIRM_POPUP_ID) as confirm_popup:
+            if confirm_popup.opened:
+                if self.popup_message is not None:
+                    imgui.text(self.popup_message)
+
+                if imgui.button("Confirm"):
+                    if self.popup_confirm_callback is not None:
+                        self.popup_confirm_callback()
+                    self.popup_active = False
+                    imgui.close_current_popup()
+
+                imgui.same_line()
+
+                if imgui.button("Cancel"):
+                    if self.popup_cancel_callback is not None:
+                        self.popup_cancel_callback()
+                    self.popup_active = False
+                    imgui.close_current_popup()
+
     def render(self, time: float, frametime: float) -> None:
         self.shader_viewer.render(time, frametime)
         self.render_ui(time, frametime)
@@ -276,6 +325,7 @@ class App(WindowConfig):
 
         self.draw_windows(time, frametime)
         self.draw_main_menu_bar()
+        self.draw_popups()
 
         imgui.render()
         self._imgui_renderer.render(imgui.get_draw_data())
@@ -305,7 +355,9 @@ class App(WindowConfig):
 
             elif not modifiers.shift and modifiers.ctrl and not modifiers.alt:
                 # only CTRL
-                if key == self.wnd.keys.O:
+                if key == self.wnd.keys.N:
+                    self.new_project_callback()
+                elif key == self.wnd.keys.O:
                     self.load_project_callback()
                 elif key == self.wnd.keys.S:
                     self.save_project_callback()
