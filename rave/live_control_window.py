@@ -15,7 +15,7 @@ class LiveControlWindow(ToolWindow):
             if expanded:
                 imgui.push_item_width(120.0)
                 changed, min_max = imgui.input_float2(
-                    "Min/Max",
+                    f"Min/Max##{u.name}",
                     u.min_value,
                     u.max_value,
                 )
@@ -31,12 +31,16 @@ class LiveControlWindow(ToolWindow):
                 if u.fmt == "1f":
                     imgui.push_item_width(200.0)
                     _, u.value = imgui.slider_float(
-                        "Value", u.value, u.min_value, u.max_value
+                        f"Value##{u.name}", u.value, u.min_value, u.max_value
                     )
                     imgui.pop_item_width()
                 elif u.fmt == "2f":
                     _, u.value = imgui.slider_float2(
-                        "Value", u.value[0], u.value[1], u.min_value, u.max_value
+                        f"Value##{u.name}",
+                        u.value[0],
+                        u.value[1],
+                        u.min_value,
+                        u.max_value,
                     )
 
             imgui.separator()
