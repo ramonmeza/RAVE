@@ -21,6 +21,7 @@ Leverage the power of GLSL by scripting your visualizer through the Scripting wi
 List of pre-defined uniforms provided by RAVE:
 | Name | Type | Description |
 |------|------|-------|
+| `rResolution` | `vec2` | The width and height of the current resolution |
 | `rTime` | `float` | Time since the application started |
 | `rFrameTime` | `float` | Time since the last frame |
 | `rAudioRMS` | `float` | Input audio RMS value (volume) |

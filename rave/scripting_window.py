@@ -24,7 +24,7 @@ class ScriptingWindow(ToolWindow):
             project.fragment_shader_source_code,
             flags=imgui.INPUT_TEXT_ALLOW_TAB_INPUT,
             height=400,
-            width=300,
+            width=500,
         )
 
         if changed and self.script_changed_callback is not None:

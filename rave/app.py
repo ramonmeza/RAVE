@@ -24,10 +24,17 @@ from rave.tool_window import ToolWindow
 
 # type aliases
 FileTypeSpecifier = List[Tuple[str, ...]]
+PopupCallback = Optional[Callable[[None], None]]
 
 
 # constants
-EXPOSED_UNIFORMS: List[str] = ["rTime", "rFrameTime", "rAudioRMS", "rAudioFFT"]
+EXPOSED_UNIFORMS: List[str] = [
+    "rResolution",
+    "rTime",
+    "rFrameTime",
+    "rAudioRMS",
+    "rAudioFFT",
+]
 CONFIRM_POPUP_ID: str = "confirm-popup"
 
 
@@ -48,8 +55,8 @@ class App(WindowConfig):
     shader_viewer: ShaderViewer
 
     popup_message: Optional[str]
-    popup_cancel_callback: Optional[Callable[[None], None]]
-    popup_confirm_callback: Optional[Callable[[None], None]]
+    popup_cancel_callback: PopupCallback
+    popup_confirm_callback: PopupCallback
     popup_active: bool
 
     def __init__(self, **kwargs) -> None:
@@ -141,9 +148,12 @@ class App(WindowConfig):
         path = self.open_filedialog([("RAVE Project", "*.raveproj")])
         if path is not None:
             self.project = load_project(path)
+            self.script_changed_callback()
+            self.update_uniforms_callback(self.shader_viewer.program, 0.0, 0.0)
+
             if self.project is None:
                 print("Failed to load project, using default")
-                self.project = Project()
+                self.new_project_callback()
 
     def save_project_callback(self) -> None:
         default_file_name = f"{self.project.name} by {self.project.author}"
@@ -207,6 +217,7 @@ class App(WindowConfig):
     ) -> None:
         # rave exposed uniforms
         rave_uniforms = {
+            "rResolution": self.window_size,
             "rTime": time,
             "rFrameTime": frametime,
             "rAudioRMS": self.audio_device.get_rms(),
@@ -335,6 +346,7 @@ class App(WindowConfig):
     def resize(self, width: int, height: int):
         self.aspect_ratio = width / height
         imgui.get_io().display_size = width, height
+        self.update_uniforms_callback(self.shader_viewer.program, 0.0, 0.0)
         self._imgui_renderer.resize(width, height)
         super().resize(width, height)
 
