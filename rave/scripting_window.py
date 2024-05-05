@@ -13,7 +13,9 @@ class ScriptingWindow(ToolWindow):
     script_changed_callback: ScriptChangedCallback
 
     def __init__(
-        self, script_changed_callback: ScriptChangedCallback = None, opened: bool = True
+        self,
+        script_changed_callback: ScriptChangedCallback = None,
+        opened: bool = False,
     ) -> None:
         super().__init__("Scripting", opened)
         self.script_changed_callback = script_changed_callback

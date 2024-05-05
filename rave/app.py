@@ -1,9 +1,11 @@
 import audioop
 import enum
 import imgui
-import numpy as np
+import json
 import moderngl
 import moderngl_window
+import numpy as np
+import os
 import tkinter as tk
 
 from moderngl_window import WindowConfig
@@ -28,6 +30,7 @@ PopupCallback = Optional[Callable[[None], None]]
 
 
 # constants
+APP_CONFIG_PATH: str = "rave.config.json"
 EXPOSED_UNIFORMS: List[str] = [
     "rResolution",
     "rTime",
@@ -36,6 +39,7 @@ EXPOSED_UNIFORMS: List[str] = [
     "rAudioFFT",
 ]
 CONFIRM_POPUP_ID: str = "confirm-popup"
+NUM_OF_RECENT_PROJECTS: int = 5
 
 
 # enums
@@ -59,8 +63,12 @@ class App(WindowConfig):
     popup_confirm_callback: PopupCallback
     popup_active: bool
 
+    is_ui_visible: bool
+
     def __init__(self, **kwargs) -> None:
         super().__init__(**kwargs)
+
+        self.is_ui_visible = True
 
         self.popup_message = None
         self.popup_cancel_callback = None
@@ -108,6 +116,39 @@ class App(WindowConfig):
         return self.windows[WindowType.AUDIO_CONFIG]
 
     # methods
+    def get_recent_projects(self) -> List[str]:
+        if not os.path.exists(APP_CONFIG_PATH):
+            with open(APP_CONFIG_PATH, "w") as fp:
+                json.dump({}, fp)
+
+        with open(APP_CONFIG_PATH, "r") as fp:
+            config: dict = json.load(fp)
+            return (
+                config["recent_projects"] if "recent_projects" in config.keys() else []
+            )
+
+    def add_recent_project(self, path) -> None:
+        # load config
+        if not os.path.exists(APP_CONFIG_PATH):
+            with open(APP_CONFIG_PATH, "w") as fp:
+                json.dump({}, fp)
+
+        with open(APP_CONFIG_PATH) as fp:
+            config: dict = json.load(fp)
+
+        # update config
+        if "recent_projects" not in config.keys():
+            config["recent_projects"] = []
+
+        if path not in config["recent_projects"]:
+            config["recent_projects"].append(path)
+
+        config["recent_projects"] = config["recent_projects"][:NUM_OF_RECENT_PROJECTS]
+
+        # save updated config
+        with open(APP_CONFIG_PATH, "w") as fp:
+            json.dump(config, fp)
+
     def create_new_project(self) -> None:
         self.project = new_project()
         self.script_changed_callback()
@@ -154,6 +195,20 @@ class App(WindowConfig):
             if self.project is None:
                 print("Failed to load project, using default")
                 self.new_project_callback()
+            else:
+                self.add_recent_project(path)
+
+    def load_recent_project_callback(self, path: str) -> None:
+        self.project = load_project(path)
+
+        if self.project is None:
+            print("Failed to load project, using default")
+            self.new_project_callback()
+        else:
+            self.add_recent_project(path)
+
+        self.script_changed_callback()
+        self.update_uniforms_callback(self.shader_viewer.program, 0.0, 0.0)
 
     def save_project_callback(self) -> None:
         default_file_name = f"{self.project.name} by {self.project.author}"
@@ -178,6 +233,9 @@ class App(WindowConfig):
 
     def fullscreen_callback(self) -> None:
         self.wnd.fullscreen = not self.wnd.fullscreen
+
+    def toggle_ui_callback(self) -> None:
+        self.is_ui_visible = not self.is_ui_visible
 
     def exit_callback(self) -> None:
         self.wnd.close()
@@ -262,9 +320,23 @@ class App(WindowConfig):
                     if clicked:
                         self.new_project_callback()
 
+                    imgui.separator()
+
                     clicked, _ = imgui.menu_item("Open Project", "Ctrl+O")
                     if clicked:
                         self.load_project_callback()
+
+                    recent_projects = self.get_recent_projects()
+                    with imgui.begin_menu(
+                        "Open Recent", len(recent_projects) > 0
+                    ) as open_recent_menu:
+                        if open_recent_menu.opened:
+                            for rp in recent_projects:
+                                clicked, _ = imgui.menu_item(f"{rp}")
+                                if clicked:
+                                    self.load_recent_project_callback(rp)
+
+                    imgui.separator()
 
                     clicked, _ = imgui.menu_item("Save Project", "Ctrl+S")
                     if clicked:
@@ -281,6 +353,12 @@ class App(WindowConfig):
                     clicked, _ = imgui.menu_item("Fullscreen", "F11")
                     if clicked:
                         self.fullscreen_callback()
+
+                    imgui.separator()
+
+                    clicked, _ = imgui.menu_item("Toggle UI", "F12")
+                    if clicked:
+                        self.toggle_ui_callback()
 
                     imgui.separator()
 
@@ -329,7 +407,9 @@ class App(WindowConfig):
 
     def render(self, time: float, frametime: float) -> None:
         self.shader_viewer.render(time, frametime)
-        self.render_ui(time, frametime)
+
+        if self.is_ui_visible:
+            self.render_ui(time, frametime)
 
     def render_ui(self, time: float, frametime: float) -> None:
         imgui.new_frame()
@@ -364,6 +444,8 @@ class App(WindowConfig):
                     self.open_window_callback(WindowType.LIVE_CONTROL)
                 elif key == self.wnd.keys.F4:
                     self.open_window_callback(WindowType.AUDIO_CONFIG)
+                elif key == self.wnd.keys.F12:
+                    self.toggle_ui_callback()
 
             elif not modifiers.shift and modifiers.ctrl and not modifiers.alt:
                 # only CTRL

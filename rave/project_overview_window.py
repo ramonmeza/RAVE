@@ -34,7 +34,7 @@ class ProjectOverviewWindow(ToolWindow):
             expanded, _ = imgui.collapsing_header("Vertex Shader Source Code")
             if expanded:
                 imgui.input_text_multiline(
-                    "GLSL Source Code",
+                    "GLSL Source Code##vertexshader",
                     project.vertex_shader_source_code,
                     flags=imgui.INPUT_TEXT_READ_ONLY,
                 )
@@ -42,7 +42,7 @@ class ProjectOverviewWindow(ToolWindow):
             expanded, _ = imgui.collapsing_header("Fragment Shader Source Code")
             if expanded:
                 imgui.input_text_multiline(
-                    "GLSL Source Code",
+                    "GLSL Source Code##fragmentshader",
                     project.fragment_shader_source_code,
                     flags=imgui.INPUT_TEXT_READ_ONLY,
                 )
