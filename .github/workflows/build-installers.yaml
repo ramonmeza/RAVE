@@ -1,11 +1,3 @@
-# # command to create installer
-# # 1. need to make installer for windows, macos, and linux
-# # 2. need to figure out versioning...
-# pyinstaller --name "RAVE" --windowed --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
-
-# # add to releases within github repo
-
-
 name: Build Installer & Release
 
 on:
@@ -16,11 +8,12 @@ on:
 jobs:
   build:
     strategy:
-      os: [
-        ubuntu-latest,
-        macos-latest,
-        windows-latest
-      ]
+      matrix:
+        os: [
+          ubuntu-latest,
+          macos-latest,
+          windows-latest
+        ]
 
     runs-on: ${{ matrix.os }}
 
@@ -47,21 +40,21 @@ jobs:
           curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python -
           export PATH="$HOME/.poetry/bin:$PATH"
 
-        - name: Install dependencies
+      - name: Install dependencies
         run: poetry install
 
-        - name: Build
-          run: poetry pyinstaller --name "RAVE" --windowed --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
+      - name: Build
+        run: poetry run pyinstaller --name "RAVE" --windowed --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
         
-        - name: Create release
-          id: create_release
-          uses: actions/create-release@v1
-          env:
-            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          with:
-            tag_name: ${{ github.ref }}
-            release_name: Release ${{ github.ref }}
-            body: |
-              Initial release
-            draft: false
-            prerelease: false
+      - name: Create release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: |
+            Initial release
+          draft: false
+          prerelease: false
