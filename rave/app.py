@@ -7,6 +7,7 @@ import moderngl_window
 import numpy as np
 import os
 import tkinter as tk
+import webbrowser
 
 from moderngl_window import WindowConfig
 from moderngl_window.context.base.keys import KeyModifiers
@@ -14,6 +15,7 @@ from moderngl_window.integrations.imgui import ModernglWindowRenderer
 from tkinter.filedialog import askopenfilename, asksaveasfilename
 from typing import Callable, List, Optional, Tuple
 
+from rave import __version__
 from rave.audio_device import AudioDevice
 from rave.audio_config_window import AudioConfigWindow
 from rave.live_control_window import LiveControlWindow
@@ -311,6 +313,12 @@ class App(WindowConfig):
             frames_per_buffer=frames_per_buffer,
         )
 
+    def about_menu_callback(self) -> None:
+        self.popup_message = f"Version: {__version__}"
+        self.popup_confirm_callback = None
+        self.popup_cancel_callback = None
+        self.popup_active = True
+
     # rendering methods
     def draw_main_menu_bar(self) -> None:
         with imgui.begin_main_menu_bar() as menu_bar:
@@ -377,6 +385,18 @@ class App(WindowConfig):
                     clicked, _ = imgui.menu_item("Audio Config", "F4")
                     if clicked:
                         self.open_window_callback(WindowType.AUDIO_CONFIG)
+
+            with imgui.begin_menu("Help") as help_menu:
+                if help_menu.opened:
+                    clicked, _ = imgui.menu_item("About")
+                    if clicked:
+                        self.about_menu_callback()
+
+                    imgui.separator()
+
+                    clicked, _ = imgui.menu_item("Documentation")
+                    if clicked:
+                        webbrowser.open("https://github.com/ramonmeza/RAVE/")
 
     def draw_windows(self, time: float, frametime: float) -> None:
         for window in self.windows:
