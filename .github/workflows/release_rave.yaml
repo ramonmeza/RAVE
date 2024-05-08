@@ -40,6 +40,9 @@ jobs:
       - name: Build RAVE using PyInstaller
         run: poetry run pyinstaller --name "RAVE" --windowed --onefile --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
 
+      - name: Copy imgui configuration into build directory
+        run: cp imgui.ini ${{ env.RAVE_DIST_FOLDER }}/imgui.ini
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
@@ -51,6 +54,9 @@ jobs:
     needs: Build
     runs-on: windows-latest
     steps:
+      - name: Checkout RAVE repository
+        uses: actions/checkout@v4
+
       - name: Download artifacts
         uses: actions/download-artifact@v4
         with:
