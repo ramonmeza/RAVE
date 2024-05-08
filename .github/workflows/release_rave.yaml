@@ -64,7 +64,7 @@ jobs:
           filename: ${{ env.RAVE_ARCHIVE_FILENAME }}.zip
       
       - name: Update latest tag
-      uses: EndBug/latest-tag@latest
+        uses: EndBug/latest-tag@latest
 
       - name: Create Release
         id: create_release
