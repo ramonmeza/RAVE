@@ -23,10 +23,28 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
+      - name: Create cache for Poetry's virtual environment
+        uses: actions/cache@v3
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+
+      - name: Install Poetry
+        uses: abatilo/actions-poetry@v2
+        with:
+          poetry-version: ${{ env.POETRY_VERSION }}
+
+      - name: Install RAVE dependencies
+        run: poetry install
+
+      - name: Build RAVE using PyInstaller
+        run: poetry run pyinstaller --name "RAVE" --windowed --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
+
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           path: ${{ env.RAVE_DIST_FOLDER }}
+          if-no-files-found: error
   
   Release:
     runs-on: windows-latest
