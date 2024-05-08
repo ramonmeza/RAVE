@@ -21,21 +21,26 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
           python-version: '3.12.0'
 
-      - name: Run image
+      - name: Setup Poetry
         uses: abatilo/actions-poetry@v2
         with:
           poetry-version: 1.7.0
 
+      - name: Define a cache for the virtual environment based on the dependencies lock file
+        uses: actions/cache@v3
+        with:
+          path: ./.venv
+          key: venv-${{ hashFiles('poetry.lock') }}
+      
       - name: Install dependencies
         run: poetry install
 
-      - name: Build
+      - name: Build Installer
         run: poetry run pyinstaller --name "RAVE" --windowed --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
         
       - name: Create release
