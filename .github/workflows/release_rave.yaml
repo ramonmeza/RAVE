@@ -7,7 +7,7 @@ on:
 
 env:
   RAVE_VERSION: latest
-  RAVE_DIST_FOLDER: dist/
+  RAVE_DIST_FOLDER: dist
   RAVE_ARCHIVE_FILENAME: rave-$RAVE_VERSION.zip
 
   PYTHON_VERSION: 3.12.0
