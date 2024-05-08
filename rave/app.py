@@ -54,6 +54,9 @@ class WindowType(enum.IntEnum):
 
 # classes
 class App(WindowConfig):
+    title: str = 'RAVE: Real-time Audio Visualization Editor'
+    window_size: Tuple[int, int] = (1280, 720)
+
     _imgui_renderer: ModernglWindowRenderer
 
     project: Project
