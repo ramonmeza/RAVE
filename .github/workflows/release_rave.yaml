@@ -8,8 +8,7 @@ on:
 env:
   RAVE_VERSION: latest
   RAVE_DIST_FOLDER: dist
-  RAVE_ARCHIVE_FILENAME: rave-$RAVE_VERSION.zip
-
+  RAVE_ARCHIVE_FILENAME: RAVE-${{ RAVE_VERSION }}.zip
   PYTHON_VERSION: 3.12.0
   POETRY_VERSION: 1.7.0
 
@@ -23,12 +22,12 @@ jobs:
       - name: Install Python
         uses: actions/setup-python@v5
         with:
-          python-version: $PYTHON_VERSION
+          python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          path: $RAVE_DIST_FOLDER
+          path: ${{ env.RAVE_DIST_FOLDER }}
   
   Release:
     runs-on: windows-latest
@@ -39,8 +38,8 @@ jobs:
       - name: Archive artifacts for release
         uses: thedoctor0/zip-release@0.7.5
         with:
-          directory: $RAVE_DIST_FOLDER
-          filename: $RAVE_ARCHIVE_FILENAME
+          directory: ${{ env.RAVE_DIST_FOLDER }}
+          filename: ${{ env.RAVE_ARCHIVE_FILENAME }}
   
       - name: Create Release
         id: create_release
@@ -60,6 +59,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: $RAVE_DIST_FOLDER/$RAVE_ARCHIVE_FILENAME
-          asset_name: $RAVE_ARCHIVE_FILENAME
+          asset_path: ${{ env.RAVE_DIST_FOLDER }}/${{ env.RAVE_ARCHIVE_FILENAME }}
+          asset_name: ${{ env.RAVE_ARCHIVE_FILENAME }}
           asset_content_type: application/zip
