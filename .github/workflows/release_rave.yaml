@@ -7,7 +7,7 @@ on:
 
 env:
   RAVE_DIST_FOLDER: dist
-  RAVE_ARCHIVE_FILENAME: RAVE-latest.zip
+  RAVE_ARCHIVE_FILENAME: RAVE-latest
   PYTHON_VERSION: 3.12.0
   POETRY_VERSION: 1.7.0
 
@@ -38,25 +38,30 @@ jobs:
         run: poetry install
 
       - name: Build RAVE using PyInstaller
-        run: poetry run pyinstaller --name "RAVE" --windowed --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
+        run: poetry run pyinstaller --name "RAVE" --windowed --onefile --hidden-import moderngl_window.context.pyglet --hidden-import glcontext --clean cli.py
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
+          name: ${{ env.RAVE_ARCHIVE_FILENAME }}
           path: ${{ env.RAVE_DIST_FOLDER }}
           if-no-files-found: error
   
   Release:
+    needs: Build
     runs-on: windows-latest
     steps:
       - name: Download artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: ${{ env.RAVE_DIST_FOLDER }}
+          name: ${{ env.RAVE_ARCHIVE_FILENAME }}
 
       - name: Archive artifacts for release
         uses: thedoctor0/zip-release@0.7.5
         with:
           directory: ${{ env.RAVE_DIST_FOLDER }}
-          filename: ${{ env.RAVE_ARCHIVE_FILENAME }}
+          filename: ${{ env.RAVE_ARCHIVE_FILENAME }}.zip
   
       - name: Create Release
         id: create_release
@@ -76,6 +81,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ${{ env.RAVE_DIST_FOLDER }}/${{ env.RAVE_ARCHIVE_FILENAME }}
-          asset_name: ${{ env.RAVE_ARCHIVE_FILENAME }}
+          asset_path: ${{ env.RAVE_DIST_FOLDER }}/${{ env.RAVE_ARCHIVE_FILENAME }}.zip
+          asset_name: ${{ env.RAVE_ARCHIVE_FILENAME }}.zip
           asset_content_type: application/zip
